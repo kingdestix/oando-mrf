@@ -1,9 +1,10 @@
 // frontend/assets/js/app.js
 // FIXED: Added upload() method for file uploads with authentication
 
-const API_BASE_DEFAULT = (typeof window !== 'undefined' && window.location && window.location.origin.startsWith('http'))
-  ? `${window.location.origin}/api`
-  : 'http://localhost:5000/api';
+const API_BASE_DEFAULT = 
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api'
+    : 'https://oando-mrf.onrender.com/api'; // ← PASTE YOUR RENDER URL HERE
 
 const app = {
     API_BASE: API_BASE_DEFAULT,
