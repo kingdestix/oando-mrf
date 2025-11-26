@@ -9,10 +9,10 @@ require('dotenv').config();
 
 // Create connection pool
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'dpg-d4jld2gdl3ps73eio7sg-a.oregon-postgres.render.com',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'oando_mrf',
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'oando_admin',
   password: process.env.DB_PASSWORD,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000,
