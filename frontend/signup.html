@@ -1,0 +1,209 @@
+<!-- frontend/signup.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .signup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            padding: 2rem 1rem;
+        }
+        .signup-card {
+            background-color: white;
+            padding: 2.5rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+        }
+        .signup-logo {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .signup-logo img {
+            max-width: 180px;
+            height: auto;
+        }
+        .signup-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .signup-title h2 {
+            color: var(--oando-navy);
+            margin-bottom: 0.5rem;
+        }
+        .signup-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--grey-500);
+        }
+        .signup-footer a {
+            color: var(--oando-orange);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-card">
+            <div class="signup-logo">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando Logo">
+            </div>
+
+            <div class="signup-title">
+                <h2>Create Account</h2>
+                <p>Register to submit material requests</p>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <form id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label required">First Name</label>
+                        <input type="text" id="first_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name" class="form-label required">Last Name</label>
+                        <input type="text" id="last_name" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user_id" class="form-label required">Employee/User ID</label>
+                        <input type="text" id="user_id" class="form-input" required placeholder="e.g., NA02735">
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label required">Email Address</label>
+                        <input type="email" id="email" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="designation" class="form-label required">Designation/Position</label>
+                        <input type="text" id="designation" class="form-input" required placeholder="e.g., Production Coordinator">
+                    </div>
+                    <div class="form-group">
+                        <label for="department" class="form-label required">Department</label>
+                        <input type="text" id="department" class="form-input" required placeholder="e.g., Operations">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location" class="form-label required">Location</label>
+                        <select id="location" class="form-select" required>
+                            <option value="">Select Location</option>
+                            <option value="LAND AREA">LAND AREA</option>
+                            <option value="MICE AREA">SWAMP AREA</option>
+                            <option value="OBOS">PHC POD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="office_extension" class="form-label">Office Extension</label>
+                        <input type="text" id="office_extension" class="form-input" placeholder="e.g., 72222">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password" class="form-label required">Password</label>
+                        <input type="password" id="password" class="form-input" required minlength="6" placeholder="Minimum 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label required">Confirm Password</label>
+                        <input type="password" id="confirm_password" class="form-input" required minlength="6">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="signupBtn">
+                    <span id="signupBtnText">Create Account</span>
+                    <span id="signupSpinner" class="hidden">
+                        <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                    </span>
+                </button>
+            </form>
+
+            <div class="signup-footer">
+                <p>Already have an account? <a href="/index.html">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Redirect if already logged in
+      if (app.isAuthenticated()) {
+        const user = app.getUser();
+        window.location.href = user.role === 'admin' || user.role === 'manager'
+          ? '/admin-dashboard.html'
+          : '/worker-dashboard.html';
+        return;
+      }
+
+      document.getElementById('signupForm').addEventListener('submit', handleSignup);
+    });
+
+    async function handleSignup(e) {
+      e.preventDefault();
+
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+
+      if (password !== confirmPassword) {
+        app.showAlert('Passwords do not match', 'error');
+        return;
+      }
+
+      const signupBtn = document.getElementById('signupBtn');
+      const btnText = document.getElementById('signupBtnText');
+      const spinner = document.getElementById('signupSpinner');
+
+      signupBtn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const userData = {
+          user_id: document.getElementById('user_id').value.trim(),
+          first_name: document.getElementById('first_name').value.trim(),
+          last_name: document.getElementById('last_name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          password: password,
+          designation: document.getElementById('designation').value.trim(),
+          department: document.getElementById('department').value.trim(),
+          location: document.getElementById('location').value,
+          office_extension: document.getElementById('office_extension').value.trim(),
+          role: 'worker'
+        };
+
+        const response = await app.api.post('/auth/register', userData);
+
+        if (response.success) {
+          app.showAlert('Account created successfully! Redirecting to login...', 'success');
+          setTimeout(() => {
+            window.location.href = '/index.html';
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Signup error:', error);
+        app.showAlert(error.message || 'Registration failed. Please try again.', 'error');
+        signupBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Hub - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+        .inventory-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 10px 15px -10px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .inventory-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -15px rgba(0, 32, 91, 0.35);
+        }
+        .inventory-card h3 {
+            margin: 0;
+            color: #00205B;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+        }
+        .inventory-card p {
+            margin: 0;
+            color: #52525b;
+            flex: 1;
+            font-size: 0.9375rem;
+        }
+        .inventory-card a {
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>Inventory Hub</h1>
+            <p style="color: #4b5563; margin-top: 0.5rem;">One place to access stock, surplus, receipts, and disbursements.</p>
+        </div>
+
+        <div class="inventory-grid">
+            <div class="inventory-card">
+                <h3>📦 Stock Levels</h3>
+                <p>Track on-hand materials, see per-warehouse quantities, and update re-order thresholds.</p>
+                <a href="/inventory-stock.html" class="btn btn-primary">Open Stock</a>
+            </div>
+            <div class="inventory-card">
+                <h3>♻️ Surplus Materials</h3>
+                <p>Review surplus items, disposition decisions, and re-purpose materials across sites.</p>
+                <a href="/inventory-surplus.html" class="btn btn-secondary">View Surplus</a>
+            </div>
+            <div class="inventory-card">
+                <h3>📥 Warehouse Receipts</h3>
+                <p>Validate inbound deliveries, receiving logs, and warehouse acknowledgments.</p>
+                <a href="/warehouse-receipts.html" class="btn btn-secondary">View Receipts</a>
+            </div>
+            <div class="inventory-card">
+                <h3>📤 Disbursements</h3>
+                <p>Audit every item issued to projects or maintenance teams, with traceable line items.</p>
+                <a href="/warehouse-disbursements.html" class="btn btn-secondary">View Disbursements</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!app.requireAuth() || !app.requireRole('admin')) return;
+        });
+    </script>
+</body>
+</html>
+
+

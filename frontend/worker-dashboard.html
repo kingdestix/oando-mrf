@@ -1,0 +1,131 @@
+<!-- frontend/worker-dashboard.html -->
+<!-- Worker Dashboard - View and Create Requests -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Requests - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/worker-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <button class="menu-toggle">☰</button>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>My Material Requests</h1>
+            <div class="page-header-actions">
+                <a href="/new-request.html" class="btn btn-primary">
+                    <span>+ New Request</span>
+                </a>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Approved</div>
+                <div class="stat-value" id="statApproved">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value" id="statThisMonth">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="filterStatus" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select id="filterPriority" class="form-select">
+                            <option value="">All Priorities</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search</label>
+                        <input type="text" id="searchInput" class="form-input" placeholder="Search requests...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="table-container" id="requestsContainer">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Request No</th>
+                        <th>Date</th>
+                        <th>Material Group</th>
+                        <th>Items</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">No Requests Found</div>
+            <div class="empty-state-description">
+                You haven't created any material requests yet.
+            </div>
+            <a href="/new-request.html" class="btn btn-primary">Create Your First Request</a>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/worker-dashboard.js"></script>
+</body>
+</html>

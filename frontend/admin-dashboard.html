@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .dashboard-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            font-size: 0.8125rem;
+        }
+        
+        .dashboard-table thead th {
+            background-color: #00205B;
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 0.625rem;
+            text-align: left;
+            white-space: nowrap;
+            border-bottom: 2px solid #F58220;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.75rem;
+        }
+        
+        .dashboard-table tbody td {
+            padding: 0.75rem 0.625rem;
+            border-bottom: 1px solid #e5e5e5;
+            vertical-align: middle;
+            font-size: 0.8125rem;
+        }
+        
+        .dashboard-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        
+        .dashboard-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .dashboard-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .dashboard-table tbody tr:nth-child(even):hover {
+            background-color: #f8f9fa;
+        }
+        
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+        }
+        
+        .detail-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .detail-modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .detail-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-section h3 {
+            margin: 0 0 1rem 0;
+            color: #00205B;
+            font-size: 1.125rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #F58220;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-size: 0.75rem;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            font-size: 0.9375rem;
+            color: #171717;
+            font-weight: 500;
+        }
+        
+        .detail-value.empty {
+            color: #a3a3a3;
+            font-style: italic;
+        }
+        
+        .manager-edit-section {
+            background: #fafafa;
+        }
+        
+        .area-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 1rem;
+            border: none;
+            background: white;
+            font-weight: 600;
+            color: #737373;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .area-tab:hover {
+            background: #f5f5f5;
+        }
+        
+        .area-tab.active {
+            color: #00205B;
+            border-bottom-color: #F58220;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>Material Requests Dashboard</h1>
+            <div class="page-header-actions">
+                <a href="/import.html" class="btn btn-secondary">Import Excel</a>
+                <button onclick="exportData()" class="btn btn-secondary">Export Excel</button>
+                <a href="/analytics.html" class="btn btn-outline">Analytics</a>
+                <button class="btn btn-secondary" onclick="openQuotationsModal()">View Quotations</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Area Filter Tabs -->
+        <div class="card mb-3" style="background: white; padding: 0;">
+            <div style="display: flex; border-bottom: 2px solid #e5e5e5; overflow-x: auto;">
+                <button class="area-tab active" data-area="all" onclick="filterByArea('all')">All Areas</button>
+                <button class="area-tab" data-area="LAR" onclick="filterByArea('LAR')">Land Area (LAR)</button>
+                <button class="area-tab" data-area="SAR" onclick="filterByArea('SAR')">Swamp Area (SAR)</button>
+                <button class="area-tab" data-area="PHC" onclick="filterByArea('PHC')">PHC POD</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">This Month</div>
+                <div class="stat-value" id="statMonth">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Value (USD)</div>
+                <div class="stat-value" id="statValue">$0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="filterStatus" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Ordered">Ordered</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Discipline</label>
+                        <select id="filterDiscipline" class="form-select">
+                            <option value="">All Disciplines</option>
+                            <option value="MECHANICAL">MECHANICAL</option>
+                            <option value="ELECTRICAL">ELECTRICAL</option>
+                            <option value="INSTRUMENT">INSTRUMENT</option>
+                            <option value="GMC">GMC</option>
+                            <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                            <option value="SERVICE">SERVICE</option>
+                            <option value="ROT EQUIPMENT">ROT EQUIPMENT</option>
+                            <option value="others">others</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Page Size</label>
+                        <select id="filterPageSize" class="form-select">
+                            <option value="25">25 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                            <option value="200">200 per page</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">From Date</label>
+                        <input type="date" id="filterFrom" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Date</label>
+                        <input type="date" id="filterTo" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search</label>
+                        <input type="text" id="searchInput" class="form-input" placeholder="MRF #, material, vendor...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">MRF Number</label>
+                        <input type="text" id="filterMrf" class="form-input" placeholder="e.g. LAR-001-2025">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- ✅ UPDATED TABLE: Added CALL OFF NUMBER and REMARKS columns -->
+        <div class="table-container" id="requestsContainer">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">S/N</th>
+                        <th style="width: 100px;">LOCATION</th>
+                        <th style="width: 150px;">MRF NUMBER</th>
+                        <th style="width: 110px;">REQUEST DATE</th>
+                        <th style="width: 60px;">YEAR</th>
+                        <th style="min-width: 250px;">REASON FOR REQUEST</th>
+                        <th style="min-width: 200px;">SERVICE\MATERIAL</th>
+                        <th style="width: 120px;">DISCIPLINE</th>
+                        <th style="min-width: 180px;">STATUS NOTES</th>
+                        <th style="width: 130px;">QUOTATION</th>
+                        <th style="width: 120px;">CALL OFF NUMBER</th>
+                        <th style="min-width: 150px;">REMARKS</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">No Requests Found</div>
+            <div class="empty-state-description">Try adjusting your filters or import data from Excel</div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="detail-modal" id="detailModal">
+        <div class="detail-modal-content">
+            <div style="padding: 1.5rem; border-bottom: 2px solid #00205B; display: flex; justify-content: space-between; align-items: center; background: white;">
+                <h2 style="margin: 0; color: #00205B;" id="modalTitle">Request Details</h2>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #737373;">×</button>
+            </div>
+            
+            <div class="detail-section">
+                <h3>Request Information</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">MRF Number</div>
+                        <div class="detail-value" id="modal_mrf_number"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Request Date</div>
+                        <div class="detail-value" id="modal_request_date"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Year</div>
+                        <div class="detail-value" id="modal_year"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Requestor Name</div>
+                        <div class="detail-value" id="modal_requester"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">User ID</div>
+                        <div class="detail-value" id="modal_user_code"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Designation</div>
+                        <div class="detail-value" id="modal_designation"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Office Extension</div>
+                        <div class="detail-value" id="modal_office_ext"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Asset (Location)</div>
+                        <div class="detail-value" id="modal_asset"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Unit Tag</div>
+                        <div class="detail-value" id="modal_unit_tag"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Discipline</div>
+                        <div class="detail-value" id="modal_discipline"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Material Category</div>
+                        <div class="detail-value" id="modal_category"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Criticality</div>
+                        <div class="detail-value" id="modal_criticality"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Work Order No</div>
+                        <div class="detail-value" id="modal_work_order"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Work Order Type</div>
+                        <div class="detail-value" id="modal_work_order_type"></div>
+                    </div>
+                    <div class="detail-item" style="grid-column: 1 / -1;">
+                        <div class="detail-label">Reason for Request</div>
+                        <div class="detail-value" id="modal_reason"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section manager-edit-section">
+                <h3>Manager Tracking</h3>
+                <form id="modalUpdateForm">
+                    <input type="hidden" id="modal_request_id">
+                    <div class="form-row form-row-3">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="modal_status" class="form-select">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Ordered">Ordered</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Internal Reference</label>
+                            <input type="text" id="modal_internal_ref" class="form-input" placeholder="Staff following up">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Action Pending</label>
+                            <input type="text" id="modal_action_pending" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Vendor Name</label>
+                            <input type="text" id="modal_vendor" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Blanket Order Number</label>
+                            <input type="text" id="modal_blanket_order" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Call Off Number</label>
+                            <input type="text" id="modal_call_off" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row form-row-3">
+                        <div class="form-group">
+                            <label class="form-label">Quotation Reference</label>
+                            <input type="text" id="modal_quotation_ref" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quotation Approval Date</label>
+                            <input type="date" id="modal_quotation_date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quotation Amount (USD)</label>
+                            <input type="number" step="0.01" id="modal_quote_usd" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Quotation Amount (EUR)</label>
+                            <input type="number" step="0.01" id="modal_quote_eur" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quotation Amount (NGN)</label>
+                            <input type="number" step="0.01" id="modal_quote_ngn" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Estimated Delivery</label>
+                            <input type="date" id="modal_est_delivery" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date of Delivery</label>
+                            <input type="date" id="modal_actual_delivery" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status Notes</label>
+                        <textarea id="modal_status_notes" class="form-textarea" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea id="modal_notes" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Other</label>
+                            <textarea id="modal_other" class="form-textarea" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; justify-content: space-between;">
+                        <button type="button" onclick="deleteRequestFromModal()" class="btn" style="background: #ef4444; color: white;">Delete Request</button>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="detail-section">
+                <h3>Materials Technical Specification</h3>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Material Description</th>
+                                <th>OEM/Model</th>
+                                <th>Part Number</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Received</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalMaterialsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quotations Modal -->
+    <div class="detail-modal" id="quotationsModal">
+        <div class="detail-modal-content" style="max-width: 1200px;">
+            <div style="padding: 1.5rem; border-bottom: 2px solid #00205B; display: flex; justify-content: space-between; align-items: center; background: white;">
+                <div>
+                    <h2 style="margin: 0; color: #00205B;">Quotations Center</h2>
+                    <p class="card-subtitle">Review pending PDFs, approve completed quotations, and upload new files for any request.</p>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-outline" onclick="refreshQuotations()">Refresh</button>
+                    <button onclick="closeQuotationsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #737373;">×</button>
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="quotations-grid">
+                    <div class="quotation-panel">
+                        <div class="panel-title">
+                            <h4>Upload to a Request</h4>
+                            <p>Select the MRF that needs a quotation, then drop a PDF.</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Area</label>
+                                <select id="quoteUploadAreaFilter" class="form-select">
+                                    <option value="all">All Areas</option>
+                                    <option value="LAR">Land Area (LAR)</option>
+                                    <option value="SAR">Swamp Area (SAR)</option>
+                                    <option value="PHC">PHC POD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Search MRF</label>
+                                <input type="text" id="quoteUploadSearchInput" class="form-input" placeholder="Type MRF number...">
+                            </div>
+                        </div>
+                        <div id="quotationRequestList" class="quotation-request-list"></div>
+                    </div>
+                    <div class="quotation-panel">
+                        <div class="panel-title">
+                            <h4>Pending & Approved Quotations</h4>
+                            <p>Review submissions, approve PDFs, or download existing files.</p>
+                        </div>
+                        <div class="quotation-tabs">
+                            <button class="quote-tab active" data-quote-status="pending">Pending</button>
+                            <button class="quote-tab" data-quote-status="approved">Approved</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Area</label>
+                                <select id="quoteAreaFilter" class="form-select">
+                                    <option value="all">All Areas</option>
+                                    <option value="LAR">Land Area (LAR)</option>
+                                    <option value="SAR">Swamp Area (SAR)</option>
+                                    <option value="PHC">PHC POD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Search</label>
+                                <input type="text" id="quoteSearchInput" class="form-input" placeholder="MRF, vendor or file name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">From Date</label>
+                                <input type="date" id="quoteFromDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">To Date</label>
+                                <input type="date" id="quoteToDate" class="form-input">
+                            </div>
+                        </div>
+                        <div id="quotationsLoading" class="mini-loading hidden">
+                            <div class="spinner"></div>
+                        </div>
+                        <div id="quotationsTableContainer" class="quotation-table"></div>
+                        <div id="quotationsEmptyState" class="empty-state small hidden">
+                            <div class="empty-state-icon">📄</div>
+                            <div class="empty-state-title">No quotations found</div>
+                            <div class="empty-state-description">Adjust the filters to see other submissions.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!-- frontend/users.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>User Management</h1>
+            <div class="page-header-actions">
+                <button onclick="showAddUserModal()" class="btn btn-primary">+ Add User</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Role Filter</label>
+                        <select id="roleFilter" class="form-select" onchange="loadUsers()">
+                            <option value="">All Roles</option>
+                            <option value="worker">Worker</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status Filter</label>
+                        <select id="statusFilter" class="form-select" onchange="loadUsers()">
+                            <option value="">All</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search</label>
+                        <input type="text" id="searchInput" class="form-input" placeholder="Name, email, user ID..." onkeyup="searchUsers()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add User</h3>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">User ID</label>
+                            <input type="text" id="user_id" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">First Name</label>
+                            <input type="text" id="first_name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Last Name</label>
+                            <input type="text" id="last_name" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Role</label>
+                            <select id="role" class="form-select" required>
+                                <option value="worker">Worker</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Designation</label>
+                            <input type="text" id="designation" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <input type="text" id="department" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" id="location" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label class="form-label required">Password</label>
+                        <input type="password" id="password" class="form-input" minlength="6">
+                        <p class="form-help">Minimum 6 characters</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeUserModal()" class="btn btn-outline">Cancel</button>
+                <button onclick="saveUser()" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/users.js"></script>
+</body>
+</html>

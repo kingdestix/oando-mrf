@@ -1,0 +1,138 @@
+<!-- frontend/index.html -->
+<!-- Oando Material Request Form - Login Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Oando Material Request Form</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            padding: 1rem;
+        }
+
+        .login-card {
+            background-color: white;
+            padding: 3rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 
+    0 15px 20px rgba(0, 0, 0, 0.15),
+    0 8px 8px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-title h2 {
+            color: var(--oando-navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-title p {
+            color: var(--grey-500);
+            font-size: 0.9375rem;
+        }
+
+        .login-footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--grey-500);
+        }
+
+        .login-footer a {
+            color: var(--oando-orange);
+            font-weight: 500;
+        }
+
+        @media (max-width: 640px) {
+            .login-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando Logo">
+            </div>
+
+            <div class="login-title">
+                <h2>Material Request Form</h2>
+                <p>Sign in to your account</p>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email" class="form-label required">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="Enter your email"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label required">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+                    <span id="loginBtnText">Sign In</span>
+                    <span id="loginSpinner" class="hidden">
+                        <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                    </span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="/signup.html">Register Here</a></p>
+                <p style="margin-top: 1rem; font-size: 0.8125rem;">
+                    <strong>Demo Credentials:</strong><br>
+                    Admin: admin@oando.com / Admin@2025<br>
+                    Manager: manager@oando.com / Admin@2025
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!-- frontend/approval-dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approval Dashboard - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .workflow-stage-badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+        
+        .stage-created { background: #e0e7ff; color: #3730a3; }
+        .stage-approved { background: #d1fae5; color: #065f46; }
+        .stage-blanket { background: #fef3c7; color: #92400e; }
+        .stage-quotation { background: #dbeafe; color: #1e40af; }
+        .stage-proforma { background: #e0f2fe; color: #0c4a6e; }
+        .stage-shipped { background: #fce7f3; color: #831843; }
+        .stage-compliance { background: #f3e8ff; color: #6b21a8; }
+        .stage-received { background: #d1fae5; color: #065f46; }
+        .stage-closed { background: #f3f4f6; color: #374151; }
+        .stage-rejected { background: #fee2e2; color: #991b1b; }
+        
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e5e5;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #00205B;
+            z-index: 1;
+        }
+        
+        .timeline-item.completed::before {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        
+        .timeline-item.rejected::before {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .workflow-roadmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .workflow-step {
+            border: 1px solid rgba(0, 32, 91, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .workflow-step.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .workflow-step.current {
+            border-color: #F58220;
+            background: #fff7ed;
+        }
+
+        .workflow-step.upcoming {
+            opacity: 0.7;
+        }
+
+        .workflow-step-title {
+            font-weight: 600;
+            color: #00205B;
+        }
+
+        .workflow-step-owner {
+            font-size: 0.75rem;
+            color: #525252;
+        }
+
+        .workflow-step-stage {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #F58220;
+        }
+
+        .approval-action-btn.btn-selected {
+            box-shadow: 0 0 0 2px rgba(0, 32, 91, 0.15);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>⏱️ Pending My Approval</h1>
+            <div class="page-header-actions">
+                <a href="/admin-dashboard.html" class="btn btn-outline">← Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+            <div class="stat-card">
+                <div class="stat-label">Pending My Approval</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Approved Today</div>
+                <div class="stat-value" id="statApprovedToday">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">My Approval Level</div>
+                <div class="stat-value" style="font-size: 1.25rem;" id="statApprovalLevel">-</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Area</label>
+                        <select id="filterArea" class="form-select">
+                            <option value="all">All Areas</option>
+                            <option value="LAR">Land Area (LAR)</option>
+                            <option value="SAR">Swamp Area (SAR)</option>
+                            <option value="PHC">PHC POD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Discipline</label>
+                        <select id="filterDiscipline" class="form-select">
+                            <option value="">All Disciplines</option>
+                            <option value="MECHANICAL">MECHANICAL</option>
+                            <option value="ELECTRICAL">ELECTRICAL</option>
+                            <option value="INSTRUMENT">INSTRUMENT</option>
+                            <option value="GMC">GMC</option>
+                            <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                            <option value="SERVICE">SERVICE</option>
+                            <option value="ROT EQUIPMENT">ROT EQUIPMENT</option>
+                            <option value="others">others</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button onclick="loadPendingApprovals()" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="table-container" id="requestsContainer">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>MRF Number</th>
+                        <th>Date</th>
+                        <th>Requestor</th>
+                        <th>Location</th>
+                        <th>Discipline</th>
+                        <th>Current Stage</th>
+                        <th>Items</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">✅</div>
+            <div class="empty-state-title">All Caught Up!</div>
+            <div class="empty-state-description">No requests pending your approval at this time.</div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </main>
+
+    <!-- Approval Modal -->
+    <div class="detail-modal" id="approvalModal">
+        <div class="detail-modal-content" style="max-width: 900px;">
+            <div style="padding: 1.5rem; border-bottom: 2px solid #00205B; display: flex; justify-content: space-between; align-items: center; background: white;">
+                <h2 style="margin: 0; color: #00205B;" id="modalTitle">Approve Request</h2>
+                <button onclick="closeApprovalModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #737373;">×</button>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+                <input type="hidden" id="modal_request_id">
+                
+                <!-- Request Summary -->
+                <div style="background: #f5f5f5; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">MRF NUMBER</div>
+                            <div style="font-weight: 700; color: #00205B;" id="modal_mrf"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">CURRENT STAGE</div>
+                            <div id="modal_stage"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">REQUESTOR</div>
+                            <div id="modal_requestor"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">LOCATION</div>
+                            <div id="modal_location"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">CURRENT GATEKEEPER</div>
+                            <div id="modal_stage_owner">-</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">NEXT EXPECTED STAGE</div>
+                            <div id="modal_next_stage">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Approval History Timeline -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #00205B; font-size: 1rem; margin-bottom: 1rem;">📋 Approval History</h3>
+                    <div id="approvalTimeline" class="timeline"></div>
+                </div>
+
+                <!-- Workflow Roadmap -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #00205B; font-size: 1rem; margin-bottom: 1rem;">🧭 Workflow Roadmap</h3>
+                    <div id="workflowRoadmap" class="workflow-roadmap"></div>
+                </div>
+                
+                <!-- Blanket Order Check (Show only at BLANKET_CHECK stage) -->
+                <div id="blanketOrderSection" style="display: none; margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="hasBlanketOrder">
+                        This request has a blanket order
+                    </label>
+                    <input type="text" id="blanketOrderRef" class="form-input" placeholder="Enter blanket order reference" style="display: none;">
+                </div>
+                
+                <!-- Action Selection -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary approval-action-btn" data-action="approve" style="width: 100%;" onclick="setApprovalAction('approve')">✅ Approve</button>
+                    <button class="btn approval-action-btn" data-action="reject" style="width: 100%; background: #ef4444; color: white;" onclick="setApprovalAction('reject')">❌ Reject</button>
+                    <button class="btn btn-outline approval-action-btn" data-action="reschedule" style="width: 100%;" onclick="setApprovalAction('reschedule')">📅 Reschedule</button>
+                </div>
+                
+                <!-- Comments/Reason -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Comments / Reason</label>
+                    <textarea id="approvalComments" class="form-textarea" rows="3" placeholder="Enter your comments or reason..."></textarea>
+                </div>
+                
+                <!-- Reschedule Date (Hidden by default) -->
+                <div class="form-group" id="rescheduleSection" style="display: none; margin-bottom: 1.5rem;">
+                    <label class="form-label">New Date</label>
+                    <input type="date" id="rescheduleDate" class="form-input">
+                </div>
+                
+                <!-- Submit -->
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button onclick="closeApprovalModal()" class="btn btn-outline">Cancel</button>
+                    <button id="submitApprovalBtn" onclick="submitApproval()" class="btn btn-primary">Submit Decision</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/approval-dashboard.js"></script>
+</body>
+</html>

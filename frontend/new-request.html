@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Material Request - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        :root {
+            --oando-navy: #00205B;
+            --oando-orange: #F58220;
+            --gray-bg: #F3F4F6;
+            --gray-border: #D1D5DB;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            font-size: 0.85rem; /* Slightly smaller enterprise font */
+        }
+
+        .mrf-container {
+            max-width: 1280px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Header Section */
+        .main-header {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            border-left: 5px solid var(--oando-orange);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-brand h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--oando-navy);
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .header-brand p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .req-number {
+            text-align: right;
+        }
+
+        .req-number span {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .req-number div {
+            font-family: 'Consolas', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--oando-orange);
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: white;
+            border: 1px solid var(--gray-border);
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            overflow: hidden; /* Keeps header inside rounded corners */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* Distinct Headers with Borders */
+        .section-header {
+            background-color: var(--oando-navy);
+            padding: 0.6rem 1.25rem;
+            border-bottom: 3px solid var(--oando-orange);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title {
+            margin: 0;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-body {
+            padding: 1.25rem;
+        }
+
+        /* Grid Layouts */
+        /* Section 1: Flex layout for variable width items */
+        .flex-row-compact {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .flex-row-compact .form-group {
+            flex: 1;
+            min-width: 120px; /* Ensures they don't get too small */
+        }
+
+        /* Section 2: Strict 4-Column Grid */
+        .grid-4-cols {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            row-gap: 0.8rem; /* Tighter vertical gap */
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: #DC2626;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--gray-border);
+            border-radius: 2px;
+            height: 34px; /* Fixed compact height */
+            background-color: #fff;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--oando-orange);
+            box-shadow: 0 0 0 1px var(--oando-orange);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-border);
+            border-radius: 2px;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+
+        /* Read Only / Locked Styling */
+        .locked-input {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            color: var(--oando-navy);
+            font-weight: 600;
+            cursor: default;
+        }
+
+        /* Table Styling */
+        .material-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--gray-border);
+        }
+
+        .material-table thead {
+            background-color: #F3F4F6;
+            color: var(--oando-navy);
+        }
+
+        .material-table th {
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--oando-navy);
+        }
+
+        .material-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .add-btn {
+            margin-top: 1rem;
+            background: white;
+            border: 1px dashed var(--oando-navy);
+            color: var(--oando-navy);
+            padding: 0.5rem 1rem;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .add-btn:hover {
+            background-color: #F0F9FF;
+            border-style: solid;
+        }
+
+        /* Actions */
+        .form-actions {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-submit {
+            background-color: var(--oando-orange);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .btn-submit:hover {
+            background-color: #d97016;
+        }
+
+        .btn-cancel {
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--gray-border);
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-4-cols { grid-template-columns: 1fr 1fr; } /* 2 cols on tablet */
+            .flex-row-compact { flex-direction: column; gap: 0.5rem; }
+        }
+        @media (max-width: 480px) {
+            .grid-4-cols { grid-template-columns: 1fr; } /* 1 col on mobile */
+        }
+    </style>
+</head>
+<body>
+    <nav style="background:white; border-bottom:1px solid #ddd; height:60px; display:flex; align-items:center; padding:0 1rem;">
+        <svg width="100" height="35" viewBox="0 0 180 80">
+            <circle cx="30" cy="40" r="25" fill="#FDDB6F"/>
+            <circle cx="30" cy="40" r="20" fill="#FCA94B"/>
+            <circle cx="30" cy="40" r="15" fill="#F58220"/>
+            <circle cx="30" cy="40" r="10" fill="#EA532F"/>
+            <circle cx="30" cy="40" r="6" fill="#00205B"/>
+            <text x="68" y="52" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#00205B">Oando</text>
+        </svg>
+    </nav>
+
+    <main class="mrf-container">
+        <div id="alertContainer"></div>
+        <form id="requestForm">
+            
+            <div class="main-header">
+                <div class="header-brand">
+                    <h1>Material Request Form</h1>
+                    <p>Enterprise Resource Planning System</p>
+                </div>
+                <div class="req-number">
+                    <span>Request Reference</span>
+                    <div id="mrfPreview">Auto-Generated</div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3 class="section-title">1. Requestor Information</h3>
+                </div>
+                <div class="section-body">
+                    <div class="flex-row-compact">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" id="first_name" class="form-input locked-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" id="last_name" class="form-input locked-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">User ID</label>
+                            <input type="text" id="user_code" class="form-input locked-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Designation</label>
+                            <input type="text" id="designation" class="form-input locked-input" readonly>
+                        </div>
+                        <div class="form-group" style="flex: 0.5;">
+                            <label class="form-label">Office Ext.</label>
+                            <input type="text" id="office_extension" class="form-input locked-input" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" id="user_location" class="form-input locked-input" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3 class="section-title">2. Work & Priority Details</h3>
+                </div>
+                <div class="section-body">
+                    <div class="grid-4-cols">
+                        <div class="form-group">
+                            <label class="form-label required">Area</label>
+                            <select id="area" class="form-select" required>
+                                <option value="">Select Area</option>
+                                <option value="Land Area">Land Area</option>
+                                <option value="Swamp Area">Swamp Area</option>
+                                <option value="PHC POD">PHC POD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Specific Location</label>
+                            <select id="location" class="form-select" required disabled>
+                                <option value="">Select Area First</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unit Tag</label>
+                            <input type="text" id="unit_tag" class="form-input" placeholder="e.g., UNIT 710">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Priority</label>
+                            <select id="criticality" class="form-select" required style="color: var(--oando-orange); font-weight:bold;">
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required">Discipline</label>
+                            <select id="discipline" class="form-select" required>
+                                <option value="">Select Discipline</option>
+                                <option value="MECHANICAL">MECHANICAL</option>
+                                <option value="ELECTRICAL">ELECTRICAL</option>
+                                <option value="INSTRUMENT">INSTRUMENT</option>
+                                <option value="GMC">GMC</option>
+                                <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                                <option value="SERVICE">SERVICE</option>
+                                <option value="ROT EQUIPMENT">ROT EQUIPMENT</option>
+                                <option value="others">others</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select id="material_category" class="form-select">
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Work Order Number</label>
+                            <input type="text" id="work_order_no" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Work Order Type</label>
+                            <input type="text" id="work_order_type" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label required">Reason / Justification</label>
+                        <textarea id="reason" class="form-textarea" rows="2" required placeholder="State technical reason for request..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3 class="section-title">3. Material Specifications</h3>
+                </div>
+                <div class="section-body">
+                    <div style="overflow-x: auto;">
+                        <table class="material-table" id="materialTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 250px;">Material Description *</th>
+                                    <th style="min-width: 140px;">OEM/Model</th>
+                                    <th style="min-width: 140px;">Part Number</th>
+                                    <th style="width: 90px;">Qty</th>
+                                    <th style="width: 90px;">Unit</th>
+                                    <th style="width: 80px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addMaterialRow()">
+                        + Add New Item Line
+                    </button>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-header">
+                    <h3 class="section-title">4. Additional Remarks</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <textarea id="remarks" class="form-textarea" rows="2" placeholder="Any additional instructions..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/worker-dashboard.html" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="submitText">Submit Request</span>
+                    <span id="submitSpinner" style="display:none;">Processing...</span>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/new-request.js"></script>
+</body>
+</html>

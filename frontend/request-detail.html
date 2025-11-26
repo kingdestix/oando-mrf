@@ -1,0 +1,446 @@
+<!-- frontend/request-detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="javascript:history.back()" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1 id="requestTitle">Request Details</h1>
+            <div class="page-header-actions">
+                <button onclick="history.back()" class="btn btn-outline">← Back</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+        <div id="loading" class="loading"><div class="spinner"></div></div>
+
+        <div id="requestContent" class="hidden">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>Request Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div><strong>MRF Number:</strong> <span id="request_no"></span></div>
+                        <div><strong>Date:</strong> <span id="request_date"></span></div>
+                        <div><strong>Year:</strong> <span id="year"></span></div>
+                    </div>
+                    <div class="form-row mt-2">
+                        <div><strong>Status:</strong> <span id="status"></span></div>
+                        <div><strong>Criticality:</strong> <span id="criticality"></span></div>
+                        <div><strong>Discipline:</strong> <span id="discipline"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>Requestor Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div><strong>Name:</strong> <span id="requester_name"></span></div>
+                        <div><strong>User ID:</strong> <span id="user_code"></span></div>
+                    </div>
+                    <div class="form-row mt-2">
+                        <div><strong>Designation:</strong> <span id="designation"></span></div>
+                        <div><strong>Location:</strong> <span id="location"></span></div>
+                    </div>
+                    <div class="form-row mt-2">
+                        <div><strong>Unit Tag:</strong> <span id="unit_tag"></span></div>
+                        <div><strong>Work Order:</strong> <span id="work_order_no"></span></div>
+                    </div>
+                    <div class="mt-2"><strong>Reason:</strong> <p id="reason"></p></div>
+                </div>
+            </div>
+
+            <div class="card mb-3" id="adminSection" style="display:none;">
+                <div class="card-header">
+                    <h3>Manager Tracking</h3>
+                </div>
+                <div class="card-body">
+                    <form id="updateForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select id="edit_status" class="form-select">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Rejected">Rejected</option>
+                                    <option value="Ordered">Ordered</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Vendor Name</label>
+                                <input type="text" id="vendor_name" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-row form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Quotation Amount (USD)</label>
+                                <input type="number" step="0.01" id="quotation_amount_usd" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quotation Amount (EUR)</label>
+                                <input type="number" step="0.01" id="quotation_amount_eur" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quotation Amount (NGN)</label>
+                                <input type="number" step="0.01" id="quotation_amount_ngn" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Internal Reference</label>
+                                <input type="text" id="internal_reference" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Blanket Order Number</label>
+                                <input type="text" id="blanket_order_number" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status Notes</label>
+                            <textarea id="status_notes" class="form-textarea" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3" id="quotationSection">
+                <div class="card-header">
+                    <h3>Quotations</h3>
+                </div>
+                <div class="card-body">
+                    <div id="requestQuotationList" class="quotation-request-list" style="margin-bottom: 1rem;"></div>
+                    <form id="requestQuotationUploadForm">
+                        <div class="dropzone" id="requestQuotationDropzone">
+                            <strong>Upload a quotation PDF</strong>
+                            <p>Drag & drop a PDF file or click to browse (5MB max).</p>
+                            <div class="quotation-file-name" id="requestQuotationSelectedFile">No file selected yet</div>
+                        </div>
+                        <input type="file" id="requestQuotationFileInput" accept="application/pdf" hidden>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Notes (optional)</label>
+                                <textarea id="requestQuotationNotes" class="form-textarea" rows="2" placeholder="Enter any context for this quotation"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row" id="requestQuotationApproveWrapper">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                                <input type="checkbox" id="requestQuotationApprove">
+                                Mark as approved
+                            </label>
+                        </div>
+                        <div id="requestQuotationUploadProgress" style="font-size: 0.85rem; color: #737373; margin: 0.5rem 0;"></div>
+                        <button type="submit" class="btn btn-primary" id="requestQuotationUploadBtn">Upload Quotation</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>Materials</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>S/N</th>
+                                    <th>Material Description</th>
+                                    <th>OEM/Model</th>
+                                    <th>Part Number</th>
+                                    <th>Quantity</th>
+                                    <th>Received</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+    let requestId;
+    let currentRequest;
+    let requestQuotationFile = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!app.requireAuth()) return;
+      setupRequestQuotationUpload();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      requestId = urlParams.get('id');
+      
+      if (!requestId) {
+        app.showAlert('Invalid request ID', 'error');
+        setTimeout(() => history.back(), 2000);
+        return;
+      }
+      
+      const user = app.getUser();
+      if (user.role !== 'admin') {
+        const approveWrapper = document.getElementById('requestQuotationApproveWrapper');
+        if (approveWrapper) {
+          approveWrapper.style.display = 'none';
+        }
+      }
+
+      await loadRequest();
+      
+      if (user.role === 'admin') {
+        document.getElementById('adminSection').style.display = 'block';
+        document.getElementById('updateForm').addEventListener('submit', handleUpdate);
+      }
+    });
+
+    async function loadRequest() {
+      try {
+        const response = await app.api.get(`/requests/${requestId}`);
+        currentRequest = response.request;
+        
+        document.getElementById('requestTitle').textContent = `Request ${currentRequest.request_no}`;
+        document.getElementById('request_no').textContent = currentRequest.request_no;
+        document.getElementById('request_date').textContent = app.formatDate(currentRequest.request_date);
+        document.getElementById('year').textContent = currentRequest.year;
+        document.getElementById('status').innerHTML = `<span class="badge ${app.getStatusBadgeClass(currentRequest.status)}">${currentRequest.status}</span>`;
+        document.getElementById('criticality').innerHTML = `<span class="badge ${app.getPriorityBadgeClass(currentRequest.criticality)}">${currentRequest.criticality}</span>`;
+        document.getElementById('discipline').textContent = currentRequest.discipline;
+        document.getElementById('requester_name').textContent = `${currentRequest.first_name} ${currentRequest.last_name}`;
+        document.getElementById('user_code').textContent = currentRequest.user_code;
+        document.getElementById('designation').textContent = currentRequest.designation;
+        document.getElementById('location').textContent = currentRequest.location;
+        document.getElementById('unit_tag').textContent = currentRequest.unit_tag || '-';
+        document.getElementById('work_order_no').textContent = currentRequest.work_order_no || '-';
+        document.getElementById('reason').textContent = currentRequest.reason;
+        
+        if (app.getUser().role === 'admin') {
+          document.getElementById('edit_status').value = currentRequest.status;
+          document.getElementById('vendor_name').value = currentRequest.vendor_name || '';
+          document.getElementById('quotation_amount_usd').value = currentRequest.quotation_amount_usd || '';
+          document.getElementById('quotation_amount_eur').value = currentRequest.quotation_amount_eur || '';
+          document.getElementById('quotation_amount_ngn').value = currentRequest.quotation_amount_ngn || '';
+          document.getElementById('internal_reference').value = currentRequest.internal_reference || '';
+          document.getElementById('blanket_order_number').value = currentRequest.blanket_order_number || '';
+          document.getElementById('status_notes').value = currentRequest.status_notes || '';
+        }
+        
+        const tbody = document.getElementById('materialsTableBody');
+        tbody.innerHTML = currentRequest.lines.map(line => `
+          <tr>
+            <td>${line.line_no}</td>
+            <td>${line.material_description}</td>
+            <td>${line.oem_model || '-'}</td>
+            <td>${line.part_number || '-'}</td>
+            <td>${line.quantity} ${line.quantity_unit}</td>
+            <td>${line.received_quantity || 0}</td>
+          </tr>
+        `).join('');
+
+        renderRequestQuotations(currentRequest.quotations || []);
+        
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('requestContent').classList.remove('hidden');
+      } catch (error) {
+        app.showAlert('Failed to load request: ' + error.message, 'error');
+        setTimeout(() => history.back(), 2000);
+      }
+    }
+
+    async function handleUpdate(e) {
+      e.preventDefault();
+      
+      try {
+        const updates = {
+          status: document.getElementById('edit_status').value,
+          vendor_name: document.getElementById('vendor_name').value,
+          quotation_amount_usd: document.getElementById('quotation_amount_usd').value || null,
+          quotation_amount_eur: document.getElementById('quotation_amount_eur').value || null,
+          quotation_amount_ngn: document.getElementById('quotation_amount_ngn').value || null,
+          internal_reference: document.getElementById('internal_reference').value,
+          blanket_order_number: document.getElementById('blanket_order_number').value,
+          status_notes: document.getElementById('status_notes').value
+        };
+        
+        await app.api.put(`/requests/${requestId}`, updates);
+        app.showAlert('Request updated successfully', 'success');
+        await loadRequest();
+      } catch (error) {
+        app.showAlert('Failed to update: ' + error.message, 'error');
+      }
+    }
+
+    function setupRequestQuotationUpload() {
+      const dropzone = document.getElementById('requestQuotationDropzone');
+      const fileInput = document.getElementById('requestQuotationFileInput');
+      const fileNameLabel = document.getElementById('requestQuotationSelectedFile');
+      const form = document.getElementById('requestQuotationUploadForm');
+      if (!dropzone || !fileInput || !form) return;
+
+      const handleFile = (file) => {
+        if (!file) return;
+        if (file.type !== 'application/pdf') {
+          app.showAlert('Only PDF files are allowed.', 'error');
+          return;
+        }
+        requestQuotationFile = file;
+        fileNameLabel.textContent = file.name;
+      };
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+      ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (eventName === 'dragover') {
+            dropzone.classList.add('dragging');
+          } else {
+            dropzone.classList.remove('dragging');
+          }
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        handleFile(file);
+      });
+
+      form.addEventListener('submit', handleRequestQuotationUpload);
+    }
+
+    async function handleRequestQuotationUpload(e) {
+      e.preventDefault();
+      if (!requestQuotationFile) {
+        app.showAlert('Please select a PDF file first.', 'error');
+        return;
+      }
+
+      const form = e.target;
+      const submitBtn = document.getElementById('requestQuotationUploadBtn');
+      const progressLabel = document.getElementById('requestQuotationUploadProgress');
+      submitBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('file', requestQuotationFile);
+      formData.append('category', 'quotation');
+
+      const notes = document.getElementById('requestQuotationNotes').value.trim();
+      if (notes) {
+        formData.append('notes', notes);
+      }
+
+      const approveCheckbox = document.getElementById('requestQuotationApprove');
+      if (approveCheckbox && approveCheckbox.checked) {
+        formData.append('status', 'approved');
+      }
+
+      try {
+        await app.api.upload(`/requests/${requestId}/attachments`, formData, (progress) => {
+          progressLabel.textContent = `Uploading ${(progress * 100).toFixed(0)}%`;
+        });
+        app.showAlert('Quotation uploaded successfully.', 'success');
+        requestQuotationFile = null;
+        document.getElementById('requestQuotationSelectedFile').textContent = 'No file selected yet';
+        form.reset();
+        approveCheckbox && (approveCheckbox.checked = false);
+        progressLabel.textContent = '';
+        await loadRequest();
+      } catch (error) {
+        app.showAlert('Failed to upload quotation: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        progressLabel.textContent = '';
+      }
+    }
+
+    function renderRequestQuotations(quotations) {
+      const list = document.getElementById('requestQuotationList');
+      if (!list) return;
+
+      if (!quotations.length) {
+        list.innerHTML = `
+          <div class="empty-state small">
+            <div class="empty-state-icon">📄</div>
+            <div class="empty-state-title">No quotations uploaded yet</div>
+            <div class="empty-state-description">Upload a PDF using the form below.</div>
+          </div>
+        `;
+        return;
+      }
+
+      const userRole = app.getUser().role;
+      list.innerHTML = quotations.map(quote => {
+        const normalizedStatus = quote.status === 'uploaded' ? 'pending' : (quote.status || 'pending');
+        const statusLabel = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+        const canModerate = userRole === 'admin' && normalizedStatus !== 'approved';
+        return `
+          <div class="quotation-request-item">
+            <div>
+              <div class="mrf">${quote.file_name}</div>
+              <div class="meta">Uploaded ${app.formatDate(quote.uploaded_at)} by ${quote.first_name || ''} ${quote.last_name || ''}</div>
+              <div class="meta">Status: ${statusLabel}</div>
+            </div>
+            <div class="quotation-actions">
+              <button type="button" class="btn btn-sm btn-outline" onclick="window.open('${getRequestAttachmentUrl(quote.file_path)}', '_blank')">View</button>
+              ${canModerate ? `
+                <button type="button" class="btn btn-sm btn-primary" onclick="updateQuotationFromDetail(${quote.id}, 'approved')">Approve</button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="updateQuotationFromDetail(${quote.id}, 'rejected')">Reject</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function updateQuotationFromDetail(id, status) {
+      try {
+        await app.api.put(`/quotations/${id}`, { status });
+        const label = status.charAt(0).toUpperCase() + status.slice(1);
+        app.showAlert(`Quotation ${label} successfully.`, 'success');
+        await loadRequest();
+      } catch (error) {
+        app.showAlert('Failed to update quotation: ' + error.message, 'error');
+      }
+    }
+
+    function getRequestAttachmentUrl(filePath) {
+      if (!filePath) return '#';
+      const normalized = filePath.replace(/\\/g, '/');
+      const idx = normalized.lastIndexOf('/uploads/');
+      if (idx !== -1) {
+        return normalized.substring(idx);
+      }
+      const altIdx = normalized.indexOf('uploads/');
+      if (altIdx !== -1) {
+        return '/' + normalized.substring(altIdx);
+      }
+      return normalized;
+    }
+    </script>
+</body>
+</html>
