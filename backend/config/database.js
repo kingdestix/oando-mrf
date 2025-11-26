@@ -1,32 +1,33 @@
-// PostgreSQL Database Configuration
-// TODO: Implement database connection
-
 // backend/config/database.js
 // PostgreSQL Database Connection Configuration
 
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Create connection pool
+// Create connection pool with SSL support
 const pool = new Pool({
   host: process.env.DB_HOST || 'dpg-d4jld2gdl3ps73eio7sg-a.oregon-postgres.render.com',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'oando_mrf',
   user: process.env.DB_USER || 'oando_admin',
   password: process.env.DB_PASSWORD,
+  // ✅ ADD SSL CONFIGURATION
+  ssl: process.env.NODE_ENV === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased from 2000
 });
 
 // Test database connection
 pool.on('connect', () => {
-  console.log('✓ Database connected successfully');
+  console.log('✅ Database connected successfully');
 });
 
 pool.on('error', (err) => {
-  console.error('✗ Unexpected database error:', err);
-  process.exit(-1);
+  console.error('❌ Unexpected database error:', err);
+  // Don't exit process on error - let the app handle it
 });
 
 // Query helper with error handling
