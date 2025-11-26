@@ -3,32 +3,41 @@
 
 const nodemailer = require('nodemailer');
 
-// Create email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER, // Your email
-    pass: process.env.SMTP_PASS  // Your email password or app password
+let transporter = null;
+let emailConfigured = false;
+
+// Try to create email transporter
+try {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    emailConfigured = true;
   }
-});
+} catch (error) {
+  console.log('⚠️  Email service initialization skipped');
+}
 
 /**
  * Send email notification
- * @param {Object} options - Email options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.html - HTML content
  */
 async function sendEmail({ to, subject, html }) {
-  try {
-    // Skip sending if SMTP not configured
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.log('⚠️  SMTP not configured, skipping email to:', to);
-      return { success: false, message: 'SMTP not configured' };
-    }
+  // If email not configured, silently skip
+  if (!emailConfigured || !transporter) {
+    console.log('📧 Email skipped (not configured):', { to, subject });
+    return { success: false, skipped: true };
+  }
 
+  try {
     const info = await transporter.sendMail({
       from: `"Oando MRF System" <${process.env.SMTP_USER}>`,
       to,
@@ -36,10 +45,10 @@ async function sendEmail({ to, subject, html }) {
       html
     });
 
-    console.log('✅ Email sent successfully:', info.messageId);
+    console.log('✅ Email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Email send error:', error);
+    console.error('❌ Email failed (continuing anyway):', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -48,17 +57,18 @@ async function sendEmail({ to, subject, html }) {
  * Verify email configuration
  */
 async function verifyEmailConfig() {
-  try {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.log('⚠️  Email notifications disabled: SMTP credentials not configured');
-      return false;
-    }
+  if (!emailConfigured || !transporter) {
+    console.log('⚠️  Email notifications disabled (SMTP not configured)');
+    return false;
+  }
 
+  try {
     await transporter.verify();
-    console.log('✅ Email server connection verified');
+    console.log('✅ Email server connected');
     return true;
   } catch (error) {
-    console.error('❌ Email server connection failed:', error.message);
+    console.error('⚠️  Email server connection failed (will skip emails):', error.message);
+    emailConfigured = false; // Disable emails if verification fails
     return false;
   }
 }
