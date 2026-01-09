@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .profile-section {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+        .profile-section h3 {
+            color: #00205B;
+            margin-bottom: 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 0.75rem;
+        }
+        .signature-preview {
+            max-width: 300px;
+            max-height: 100px;
+            border: 2px solid #e5e5e5;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            background: #f9fafb;
+            margin-top: 0.5rem;
+        }
+        .signature-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="assets/images/oando-logo.png" alt="Oando Energy" class="logo">
+            </a>
+            <div class="navbar-menu" id="sidebarMenu"></div>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>My Profile</h1>
+            <div class="page-header-actions">
+                <a href="/admin-dashboard.html" class="btn btn-outline">← Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Personal Information Section -->
+        <div class="profile-section">
+            <h3>Personal Information</h3>
+            <div class="form-row form-row-2">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" id="firstName" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" id="lastName" class="form-input" readonly>
+                </div>
+            </div>
+            <div class="form-row form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">User ID</label>
+                    <input type="text" id="userId" class="form-input" readonly>
+                </div>
+            </div>
+            <div class="form-row form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <input type="text" id="role" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Designation</label>
+                    <input type="text" id="designation" class="form-input" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signature Management Section -->
+        <div class="profile-section">
+            <h3>Digital Signature</h3>
+            <p style="color: #737373; font-size: 0.875rem; margin-bottom: 1.5rem;">
+                Upload your digital signature. This signature will be automatically used when you approve requests, eliminating the need to upload it each time.
+            </p>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Upload Signature Image</label>
+                <input type="file" id="signatureFile" class="form-input" accept="image/*" style="padding: 0.5rem;">
+                <small style="color: #737373; font-size: 0.8125rem; display: block; margin-top: 0.25rem;">
+                    Upload a clear image of your signature (PNG, JPG, or GIF). Recommended size: 300x100px
+                </small>
+            </div>
+
+            <div id="signaturePreviewContainer" style="display: none; margin-bottom: 1.5rem;">
+                <label class="form-label">Current Signature</label>
+                <div class="signature-preview" id="signaturePreview">
+                    <!-- Signature preview will be shown here -->
+                </div>
+                <button onclick="removeSignature()" class="btn btn-outline" style="margin-top: 0.75rem;">
+                    Remove Signature
+                </button>
+            </div>
+
+            <button onclick="saveSignature()" class="btn btn-primary" id="saveSignatureBtn">
+                Save Signature
+            </button>
+        </div>
+
+        <!-- Password Change Section -->
+        <div class="profile-section">
+            <h3>Change Password</h3>
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" id="currentPassword" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" id="newPassword" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" id="confirmPassword" class="form-input">
+            </div>
+            <button onclick="changePassword()" class="btn btn-primary">
+                Change Password
+            </button>
+        </div>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/profile.js"></script>
+</body>
+</html>
+

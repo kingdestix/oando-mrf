@@ -1,0 +1,42 @@
+I'm working on an Oando MRF (Material Request Form) system. Here's the complete context:
+
+PROJECT: Enterprise Material Request Form management system with multi-stage approval workflow.
+
+WORKFLOW: REQUESTOR_SUBMITTED → TECHNICAL_COORDINATOR_REVIEW → ASSISTANT_MANAGER_REVIEW → AREA_MANAGER_REVIEW → POD_PLANNER_REVIEW → DISCIPLINE_UNIT_REVIEW → DISCIPLINE_MANAGER_APPROVAL → COMMERCIAL_REVIEW → COMMERCIAL_APPROVED → MATERIAL_DELIVERY → MATERIAL_RECEIVED → CLOSED
+
+KEY RULES:
+- Each role approves only at their designated stage
+- Discipline Manager approval moves to COMMERCIAL_REVIEW (not COMPLETED)
+- DU workflow: DM approves → DU sees notification → Downloads MRF → Contacts supplier → Checks "Quotation Received" → Commercial form appears → Fills details → Submits to DODM
+- Signatures display in PDF with approver names, "APPROVED" text inside boxes
+- PDF available at COMMERCIAL_REVIEW stage and later
+
+TECH STACK: Node.js/Express backend, PostgreSQL, Vanilla JS frontend, PDFKit for PDFs, Multer for uploads, JWT auth
+
+MAIN FILES:
+backend/server.js - Express server entry
+backend/config/database.js - PostgreSQL connection pool
+backend/middleware/auth.js - JWT authentication
+backend/middleware/upload.js - File upload (Multer)
+backend/models/database.sql - Database schema
+backend/utils/invoiceGenerator.js - MRF PDF generation (PDFKit)
+backend/utils/requestNumber.js - MRF number generator (LAR/SAR/PHC-001-2025)
+backend/controllers/requestController.js - Request CRUD, PDF download, delivery confirmation
+backend/controllers/approvalController.js - Approval workflow, pending/approved requests, commercial workflow
+backend/routes/requests.js - Request API routes
+backend/routes/approval.js - Approval API routes
+
+frontend/approval-dashboard.html - Approval dashboard UI
+frontend/assets/js/approval-dashboard.js - Approval logic, modal handling, commercial workflow
+frontend/assets/js/app.js - Core utilities (API, auth, alerts)
+frontend/new-request.html - Create request form
+frontend/assets/js/new-request.js - Request creation logic
+
+DATABASE: users (roles), material_requests (workflow_stage, approval fields, quotation_received), material_request_lines (line items), approval_history (audit trail)
+
+ROLES: worker, technical_coordinator, assistant_manager, area_manager_land/swamp/phc, pod_planner, discipline_unit, discipline_manager, dodm
+
+FEATURES: Multi-stage approval, signature uploads, commercial workflow with quotation received checkbox, PDF generation, material delivery tracking, role-based access control
+
+CURRENT STATE: Signature paths fixed, DU workflow reorganized, quotation received checkbox implemented, DM approval notification shows "Contact Supplier", commercial form only appears after checkbox checked.
+

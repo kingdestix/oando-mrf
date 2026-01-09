@@ -1,0 +1,55 @@
+# Render Deployment Configuration for Oando MRF Backend
+# This file tells Render how to deploy your backend service
+
+services:
+  # Backend Web Service
+  - type: web
+    name: oando-mrf-backend
+    env: node
+    region: oregon  # Change to your preferred region (oregon, frankfurt, singapore, etc.)
+    plan: free  # Use 'starter' or 'standard' for paid plans
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Node Environment
+      - key: NODE_ENV
+        value: production
+      
+      # Server Port (Render auto-assigns, but set for consistency)
+      - key: PORT
+        value: 10000
+      
+      # Database Configuration (UPDATE THESE with your Render PostgreSQL database values)
+      - key: DB_HOST
+        sync: false  # Set manually in Render dashboard after creating database
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        sync: false  # Set manually in Render dashboard
+      - key: DB_USER
+        sync: false  # Set manually in Render dashboard
+      - key: DB_PASSWORD
+        sync: false  # Set manually in Render dashboard (keep secret!)
+      
+      # JWT Secret (IMPORTANT: Generate a strong random string)
+      - key: JWT_SECRET
+        sync: false  # Set manually in Render dashboard
+        # Generate with: openssl rand -base64 32
+      
+      # Frontend URL (UPDATE after Netlify deployment)
+      - key: FRONTEND_URL
+        value: https://oando-mrf.netlify.app
+      
+      # JWT Expiration (optional, defaults to 7d)
+      - key: JWT_EXPIRE
+        value: 7d
+
+databases:
+  # PostgreSQL Database
+  - name: oando-mrf-db
+    databaseName: oando_mrf
+    user: oando_admin
+    plan: free  # Free tier: 1GB storage, 90-day retention
+    region: oregon  # Should match your web service region
+

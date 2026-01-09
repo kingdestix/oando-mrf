@@ -1,0 +1,824 @@
+<!-- frontend/approval-dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approval Dashboard - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .workflow-stage-badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+        
+        .stage-created { background: #e0e7ff; color: #3730a3; }
+        .stage-approved { background: #d1fae5; color: #065f46; }
+        .stage-blanket { background: #fef3c7; color: #92400e; }
+        .stage-quotation { background: #dbeafe; color: #1e40af; }
+        .stage-proforma { background: #e0f2fe; color: #0c4a6e; }
+        .stage-shipped { background: #fce7f3; color: #831843; }
+        .stage-compliance { background: #f3e8ff; color: #6b21a8; }
+        .stage-received { background: #d1fae5; color: #065f46; }
+        .stage-closed { background: #f3f4f6; color: #374151; }
+        .stage-rejected { background: #fee2e2; color: #991b1b; }
+        
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e5e5;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #00205B;
+            z-index: 1;
+        }
+        
+        .timeline-item.completed::before {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        
+        .timeline-item.rejected::before {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .workflow-roadmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .workflow-step {
+            border: 1px solid rgba(0, 32, 91, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .workflow-step.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .workflow-step.current {
+            border-color: #F58220;
+            background: #fff7ed;
+        }
+
+        .workflow-step.upcoming {
+            opacity: 0.7;
+        }
+
+        .workflow-step-title {
+            font-weight: 600;
+            color: #00205B;
+        }
+
+        .workflow-step-owner {
+            font-size: 0.75rem;
+            color: #525252;
+        }
+
+        .workflow-step-stage {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #F58220;
+        }
+
+        .approval-action-btn.btn-selected {
+            box-shadow: 0 0 0 2px rgba(0, 32, 91, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 4px 12px rgba(16, 185, 129, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.3), 0 4px 16px rgba(16, 185, 129, 0.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    
+    <nav class="navbar">
+        <div class="navbar-container">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="assets/images/oando-logo.png" alt="Oando Energy" class="logo">
+            </a>
+            <div class="navbar-menu" id="sidebarMenu"></div>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1 id="dashboardTitle">⏱️ Pending My Approval</h1>
+            <div class="page-header-actions" id="pageHeaderActions">
+                <!-- Actions will be set by JS based on role -->
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+            <div class="stat-card">
+                <div class="stat-label" id="statPendingLabel">Active Requests</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Processed Today</div>
+                <div class="stat-value" id="statApprovedToday">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label" id="statTotalLabel">Total Requests</div>
+                <div class="stat-value" id="statTotalRequests">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <!-- Show All Requests Toggle - Available for all approvers -->
+                <div id="showAllToggle" style="display: none; margin-bottom: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e5e5;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="showAllRequests" onchange="toggleShowAll()">
+                        <span style="font-weight: 600; color: #00205B;">Show All Requests (Pending + Approved)</span>
+                    </label>
+                    <small style="color: #737373; display: block; margin-top: 0.25rem;">View all requests you've handled, including those you've already approved</small>
+                </div>
+                <!-- Discipline Manager: Show All Requests Toggle (keep for backward compatibility) -->
+                <div id="disciplineManagerToggle" style="display: none; margin-bottom: 1rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem; border: 1px solid #10b981;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="showAllRequestsDM" onchange="toggleShowAllDM()">
+                        <span style="font-weight: 600; color: #00205B;">Show All Requests (Pending + Approved)</span>
+                    </label>
+                    <small style="color: #737373; display: block; margin-top: 0.25rem;">View all requests you've handled, including those you've already approved</small>
+                </div>
+                <!-- POD Planner: Month Filter -->
+                <div id="podMonthFilter" style="display: none; margin-bottom: 1rem; padding: 0.75rem; background: #f0f9ff; border-radius: 0.5rem; border: 1px solid #00205B;">
+                    <label style="font-weight: 600; color: #00205B; margin-bottom: 0.5rem; display: block;">Filter by Month</label>
+                    <input type="month" id="filterMonthApproval" class="form-input" style="max-width: 200px;" onchange="loadPendingApprovals(1)">
+                    <small style="color: #737373; display: block; margin-top: 0.25rem;">Filter requests by month</small>
+                </div>
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Area</label>
+                        <select id="filterArea" class="form-select">
+                            <option value="all">All Areas</option>
+                            <option value="LAR">Land Area (LAR)</option>
+                            <option value="SAR">Swamp Area (SAR)</option>
+                            <option value="PHC">PHC POD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Discipline</label>
+                        <select id="filterDiscipline" class="form-select">
+                            <option value="">All Disciplines</option>
+                            <option value="ROTATING EQUIPMENT">ROTATING EQUIPMENT</option>
+                            <option value="POWER GENERATION">POWER GENERATION</option>
+                            <option value="METERING AND AUTOMATION">METERING AND AUTOMATION</option>
+                            <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                            <option value="ESP">ESP</option>
+                            <option value="PRODUCTION">PRODUCTION</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button onclick="loadPendingApprovals()" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Tabs for Pending and Approved Requests -->
+        <div style="margin-bottom: 1.5rem; border-bottom: 2px solid #e5e5e5;">
+            <div style="display: flex; gap: 0;">
+                <button id="pendingTab" onclick="switchTab('pending')" class="tab-button active" style="padding: 0.75rem 1.5rem; background: #00205B; color: white; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Pending Requests
+                </button>
+                <button id="approvedTab" onclick="switchTab('approved')" class="tab-button" style="padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Approved Requests
+                </button>
+                <!-- POD Planner 4-Status View -->
+                <button id="podStatusTab1" onclick="switchPodStatus('approved_mrf')" class="tab-button pod-status-tab" style="display: none; padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Approved MRF
+                </button>
+                <button id="podStatusTab2" onclick="switchPodStatus('approved_commercial')" class="tab-button pod-status-tab" style="display: none; padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Approved Commercial
+                </button>
+                <button id="podStatusTab3" onclick="switchPodStatus('material_delivery')" class="tab-button pod-status-tab" style="display: none; padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Material Delivery
+                </button>
+                <button id="podStatusTab4" onclick="switchPodStatus('material_received')" class="tab-button pod-status-tab" style="display: none; padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Material Received
+                </button>
+                <button id="areaRequestsTab" onclick="switchTab('area')" class="tab-button" style="display: none; padding: 0.75rem 1.5rem; background: #e5e5e5; color: #737373; border: none; cursor: pointer; font-weight: 600; border-radius: 0.5rem 0.5rem 0 0;">
+                    Area Requests
+                </button>
+            </div>
+        </div>
+
+        <!-- Requests Table (Hidden for DODM, shown for others) -->
+        <div class="table-container" id="requestsContainer">
+            <table class="table" id="requestsTable">
+                <thead>
+                    <tr>
+                        <th>MRF Number</th>
+                        <th>Date</th>
+                        <th>Requestor</th>
+                        <th>Location</th>
+                        <th>Discipline</th>
+                        <th>Current Stage</th>
+                        <th>Items</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody"></tbody>
+            </table>
+            <!-- DODM Quotations Grid (shown only for DODM) -->
+            <div id="dodmQuotationsGrid" style="display: none;"></div>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">✅</div>
+            <div class="empty-state-title">All Caught Up!</div>
+            <div class="empty-state-description">No requests pending your approval at this time.</div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </main>
+
+    <!-- Approval Modal -->
+    <div class="detail-modal" id="approvalModal">
+        <div class="detail-modal-content" style="max-width: 900px;">
+            <div style="padding: 1.5rem; border-bottom: 2px solid #00205B; display: flex; justify-content: space-between; align-items: center; background: white;">
+                <h2 style="margin: 0; color: #00205B;" id="modalTitle">Approve Request</h2>
+                <button onclick="closeApprovalModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #737373;">×</button>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+                <input type="hidden" id="modal_request_id">
+                
+                <!-- Request Summary -->
+                <div style="background: #f5f5f5; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">MRF NUMBER</div>
+                            <div style="font-weight: 700; color: #00205B;" id="modal_mrf"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">CURRENT STAGE</div>
+                            <div id="modal_stage"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">REQUESTOR</div>
+                            <div id="modal_requestor"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">LOCATION</div>
+                            <div id="modal_location"></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">CURRENT GATEKEEPER</div>
+                            <div id="modal_stage_owner">-</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: #737373; font-weight: 600;">NEXT EXPECTED STAGE</div>
+                            <div id="modal_next_stage">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Request Details: Attachments and Remarks -->
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e5e5;">
+                    <h3 style="color: #00205B; font-size: 1rem; margin-bottom: 1rem;">📎 Request Details</h3>
+                    
+                    <!-- Additional Remarks -->
+                    <div id="remarksSection" style="margin-bottom: 1rem; display: none;">
+                        <h4 style="color: #00205B; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Additional Remarks</h4>
+                        <div id="modal_remarks" style="padding: 0.75rem; background: white; border-radius: 0.375rem; border: 1px solid #d1d5db; color: #374151; font-size: 0.875rem; white-space: pre-wrap;"></div>
+                    </div>
+                    
+                    <!-- Attachments -->
+                    <div id="attachmentsSection" style="display: none;">
+                        <h4 style="color: #00205B; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Attached Files</h4>
+                        <div id="modal_attachments" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    </div>
+                    
+                    <div id="noAttachmentsMessage" style="display: none; color: #6b7280; font-size: 0.875rem; font-style: italic;">
+                        No attachments or remarks provided.
+                    </div>
+                </div>
+
+                <!-- Approval History Timeline -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #00205B; font-size: 1rem; margin-bottom: 1rem;">📋 Approval History</h3>
+                    <div id="approvalTimeline" class="timeline"></div>
+                </div>
+
+                <!-- Workflow Roadmap -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #00205B; font-size: 1rem; margin-bottom: 1rem;">🧭 Workflow Roadmap</h3>
+                    <div id="workflowRoadmap" class="workflow-roadmap"></div>
+                </div>
+                
+                <!-- POD Route to Discipline (Show only for POD Planner at POD_PLANNER_REVIEW stage) -->
+                <div id="podRouteSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 0.5rem; border: 2px solid #00205B; box-shadow: 0 4px 6px rgba(0, 32, 91, 0.1);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div style="width: 48px; height: 48px; background: #00205B; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">🎯</div>
+                        <div>
+                            <h4 style="color: #00205B; margin: 0 0 0.25rem 0; font-size: 1.125rem; font-weight: 700;">Route to Discipline Unit</h4>
+                            <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Select the discipline unit that will process this request</p>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label" style="font-weight: 600; color: #00205B; margin-bottom: 0.5rem;">Discipline Unit *</label>
+                        <select id="routeDiscipline" class="form-select" required style="font-size: 1rem; padding: 0.75rem; border: 2px solid #00205B; border-radius: 0.5rem;">
+                            <option value="">-- Select Discipline Unit --</option>
+                            <option value="ROTATING EQUIPMENT">ROTATING EQUIPMENT</option>
+                            <option value="POWER GENERATION">POWER GENERATION</option>
+                            <option value="METERING AND AUTOMATION">METERING AND AUTOMATION</option>
+                            <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                            <option value="ESP">ESP</option>
+                            <option value="PRODUCTION">PRODUCTION</option>
+                        </select>
+                        <small style="color: #737373; font-size: 0.8125rem; display: block; margin-top: 0.5rem; font-style: italic;">
+                            ⚠️ This action will route the request to the selected discipline unit for review and processing
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Action Selection -->
+                <div id="approvalActionsDiv" class="approval-actions" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary approval-action-btn" data-action="approve" style="width: 100%;" onclick="setApprovalAction('approve')" id="approveBtn">✅ Approve</button>
+                    <button class="btn approval-action-btn" data-action="reject" style="width: 100%; background: #ef4444; color: white;" onclick="setApprovalAction('reject')">❌ Reject</button>
+                    <button class="btn btn-outline approval-action-btn" data-action="reschedule" style="width: 100%;" onclick="setApprovalAction('reschedule')">📅 Reschedule</button>
+                </div>
+                
+                <!-- Comments/Reason -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Comments / Reason</label>
+                    <textarea id="approvalComments" class="form-textarea" rows="3" placeholder="Enter your comments or reason..."></textarea>
+                </div>
+                
+                <!-- Signature Upload -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Signature (Optional)</label>
+                    <div id="profileSignatureNotice" style="display: none; padding: 0.75rem; background: #e0f2fe; border-radius: 0.375rem; border: 1px solid #38bdf8; margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.8125rem; color: #0369a1; font-weight: 500;">
+                            ✓ Your profile signature will be used automatically. Upload a different signature below if needed.
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="file" id="approvalSignature" class="form-input" accept="image/*,.pdf" style="padding: 0.5rem; flex: 1;">
+                        <button type="button" id="removeSignatureBtn" onclick="removeSignature()" class="btn btn-outline" style="display: none; padding: 0.5rem 1rem;">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    </div>
+                    <small style="color: #737373; font-size: 0.8125rem;">Upload a signature to override your profile signature, or leave blank to use your profile signature</small>
+                    <div id="signaturePreview" style="margin-top: 0.5rem; display: none;">
+                        <img id="signaturePreviewImg" style="max-width: 200px; max-height: 100px; border: 1px solid #e5e5e5; border-radius: 4px;">
+                        <div id="signatureFileName" style="margin-top: 0.25rem; font-size: 0.75rem; color: #6b7280;"></div>
+                    </div>
+                </div>
+                
+                <!-- Discipline Unit Section: Contract Details, Quotation Upload, Blanket Order -->
+                <div id="disciplineContractSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 2px solid #00205B;">
+                    <h4 style="color: #00205B; margin-bottom: 1.5rem; font-size: 1.125rem; border-bottom: 2px solid #00205B; padding-bottom: 0.5rem;">📝 Discipline Unit Review & Processing</h4>
+                    
+                    <!-- Contract Details -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; font-weight: 600;">Contract Details</h5>
+                    <div class="form-row form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Contract Number</label>
+                            <input type="text" id="contractNumber" class="form-input" placeholder="Enter contract number">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contract Validity Date</label>
+                            <input type="date" id="contractValidity" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Vendor Name</label>
+                            <input type="text" id="vendorNameDiscipline" class="form-input" placeholder="Enter vendor name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quotation Reference</label>
+                            <input type="text" id="quotationReference" class="form-input" placeholder="Enter quotation reference">
+                        </div>
+                    </div>
+                        <div class="form-row form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Contract Amount (USD)</label>
+                                <input type="number" step="0.01" id="contractAmountUSD" class="form-input" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contract Amount (EUR)</label>
+                                <input type="number" step="0.01" id="contractAmountEUR" class="form-input" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contract Amount (NGN)</label>
+                                <input type="number" step="0.01" id="contractAmountNGN" class="form-input" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quotation Upload and Details -->
+                    <div style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e5e5;">
+                        <h5 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; font-weight: 600;">📄 Quotation Details</h5>
+                        <div class="form-row form-row-2" style="margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Quotation Amount (USD)</label>
+                                <input type="number" step="0.01" id="quotationAmountUSD" class="form-input" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estimated Delivery Date</label>
+                                <input type="date" id="estimatedDeliveryDate" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label">Quotation PDF</label>
+                            <input type="file" id="quotationFileUpload" class="form-input" accept="application/pdf" style="padding: 0.5rem;">
+                            <small style="color: #737373; font-size: 0.8125rem; display: block; margin-top: 0.25rem;">
+                                Upload quotation PDF document (Max 5MB)
+                            </small>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label">Quotation Notes (Optional)</label>
+                            <textarea id="quotationNotes" class="form-textarea" rows="2" placeholder="Add any notes about this quotation..."></textarea>
+                        </div>
+                        <div id="quotationUploadStatus" style="font-size: 0.875rem; color: #10b981; margin-top: 0.5rem; display: none;"></div>
+                    </div>
+                    
+                    <!-- Blanket Order (moved here for Discipline Unit) -->
+                    <div style="padding-top: 1.5rem; border-top: 1px solid #e5e5e5;">
+                        <h5 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; font-weight: 600;">📋 Blanket Order Information</h5>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 0.75rem;">
+                            <input type="checkbox" id="disciplineBlanketOrder">
+                            This request has a blanket order
+                        </label>
+                        <input type="text" id="disciplineBlanketOrderRef" class="form-input" placeholder="Enter blanket order reference" style="display: none;">
+                    </div>
+                </div>
+                
+                <!-- Reschedule Date (Hidden by default) -->
+                <div class="form-group" id="rescheduleSection" style="display: none; margin-bottom: 1.5rem;">
+                    <label class="form-label">New Date</label>
+                    <input type="date" id="rescheduleDate" class="form-input">
+                </div>
+                
+                <!-- DODM Commercial Approval Section -->
+                <div id="dodmCommercialSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #fef3c7; border-radius: 0.5rem; border: 2px solid #f59e0b;">
+                    <h4 style="color: #92400e; margin-bottom: 1rem; font-size: 1.125rem; border-bottom: 2px solid #f59e0b; padding-bottom: 0.5rem;">💰 Commercial Approval (DODM)</h4>
+                    <p style="color: #92400e; font-size: 0.875rem; margin-bottom: 1rem;">Review the contractor quotation details and approve the commercial terms.</p>
+                    
+                    <div id="commercialDetailsDisplay" style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: 0.375rem; border: 1px solid #e5e5e5;">
+                        <div class="form-row form-row-2" style="margin-bottom: 0.75rem;">
+                            <div>
+                                <label style="font-size: 0.8125rem; color: #6b7280; font-weight: 600;">Contractor Name:</label>
+                                <div id="displayContractorName" style="font-size: 0.9375rem; color: #00205B; font-weight: 600;">-</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8125rem; color: #6b7280; font-weight: 600;">Quotation Reference:</label>
+                                <div id="displayQuotationRef" style="font-size: 0.9375rem; color: #00205B; font-weight: 600;">-</div>
+                            </div>
+                        </div>
+                        <div class="form-row form-row-3" style="margin-bottom: 0.75rem;">
+                            <div>
+                                <label style="font-size: 0.8125rem; color: #6b7280; font-weight: 600;">Quotation Amount (USD):</label>
+                                <div id="displayQuoteUSD" style="font-size: 0.9375rem; color: #00205B; font-weight: 600;">-</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8125rem; color: #6b7280; font-weight: 600;">Contract Amount (USD):</label>
+                                <div id="displayContractUSD" style="font-size: 0.9375rem; color: #00205B; font-weight: 600;">-</div>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8125rem; color: #6b7280; font-weight: 600;">Estimated Delivery:</label>
+                                <div id="displayEstDelivery" style="font-size: 0.9375rem; color: #00205B; font-weight: 600;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Commercial Approval Comments</label>
+                        <textarea id="commercialApprovalComments" class="form-textarea" rows="3" placeholder="Enter your approval comments..."></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button id="dodmRejectBtn" onclick="if(typeof rejectCommercial === 'function') { rejectCommercial(); } else { console.error('rejectCommercial not available'); }" class="btn" style="background: #ef4444; color: white; font-weight: 600; flex: 1; padding: 0.75rem;">
+                            ❌ Reject Quotation
+                        </button>
+                        <button id="dodmApproveBtn" onclick="approveCommercial()" class="btn" style="background: #10b981; color: white; font-weight: 600; flex: 1; padding: 0.75rem;">
+                            ✅ Approve Commercial Terms
+                        </button>
+                        <button onclick="closeApprovalModal()" class="btn btn-outline" style="padding: 0.75rem;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- DM Approval Notice for DU -->
+                <div id="dmApprovalNotice" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="width: 4px; height: 100%; background: #00205B; border-radius: 2px; flex-shrink: 0;"></div>
+                        <div style="flex: 1;">
+                            <h4 style="color: #00205B; margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 600;">Discipline Manager Approval Confirmed</h4>
+                            <p style="color: #475569; margin: 0 0 1rem 0; font-size: 0.875rem; line-height: 1.5;">This Material Request Form has been approved by the Discipline Manager. Proceed with contractor engagement and quotation procurement.</p>
+                            <button onclick="downloadMRFFromModal()" class="btn" style="background: #00205B; color: white; font-weight: 500; padding: 0.625rem 1.25rem; font-size: 0.875rem;">
+                                Download MRF Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- STEP 1: MRF Sent to Contractor Checkbox -->
+                <div id="mrfSentToContractorSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #ffffff; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; font-weight: 600;">Step 1: Contractor Engagement</h4>
+                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">Download the MRF document and forward it to the selected contractor for quotation submission. Confirm below once the document has been transmitted.</p>
+                    <button onclick="downloadMRFFromModal()" class="btn" style="background: #00205B; color: white; font-weight: 500; padding: 0.625rem 1.25rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                        Download MRF Document
+                    </button>
+                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" id="mrfSentCheckbox" onchange="markMRFSent()" style="width: 1.125rem; height: 1.125rem; cursor: pointer; margin-top: 0.125rem; flex-shrink: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; color: #1e293b; margin-bottom: 0.25rem; font-size: 0.875rem;">MRF Document Transmitted to Contractor</div>
+                            <div style="font-size: 0.8125rem; color: #64748b; line-height: 1.4;">Confirm that the MRF has been forwarded to the contractor for quotation preparation</div>
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- STEP 2: Quotation Received Confirmation Checkbox -->
+                <div id="quotationReceivedSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #ffffff; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; font-weight: 600;">Step 2: Quotation Receipt Confirmation</h4>
+                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">Upon receipt of the contractor's quotation, confirm below to proceed with commercial details entry.</p>
+                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" id="quotationReceivedCheckbox" onchange="markQuotationReceived()" style="width: 1.125rem; height: 1.125rem; cursor: pointer; margin-top: 0.125rem; flex-shrink: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; color: #1e293b; margin-bottom: 0.25rem; font-size: 0.875rem;">Quotation Received from Contractor</div>
+                            <div style="font-size: 0.8125rem; color: #64748b; line-height: 1.4;">Confirm receipt to enable commercial details entry form</div>
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- MRF Download for DU at Commercial Review -->
+                <div id="mrfDownloadForDU" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: #00205B; margin: 0 0 0.25rem 0; font-size: 0.9375rem; font-weight: 500;">MRF Document Available</h4>
+                            <p style="margin: 0; font-size: 0.8125rem; color: #64748b;">Download the Material Request Form for contractor submission</p>
+                        </div>
+                        <button onclick="downloadMRFFromModal()" class="btn" style="background: #00205B; color: white; font-weight: 500; padding: 0.5rem 1rem; font-size: 0.875rem;">
+                            Download Document
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- STEP 3: DU Commercial Details Form (Only after quotation received) -->
+                <div id="duCommercialDetailsSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #ffffff; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #00205B; margin-bottom: 1rem; font-size: 0.9375rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; font-weight: 600;">Step 3: Commercial Details Entry</h4>
+                    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5;">Enter the quotation details and upload the contractor's quotation document. This information will be forwarded to the Divisional Operations & Development Manager (DODM) for commercial approval.</p>
+                    
+                    <div class="form-row form-row-2" style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Contractor/Vendor Name *</label>
+                            <input type="text" id="duContractorName" class="form-input" placeholder="Enter contractor name" value="">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Quotation Reference *</label>
+                            <input type="text" id="duQuotationRef" class="form-input" placeholder="Enter quotation reference" value="">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row form-row-3" style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Quotation Amount (USD) <span style="color: #737373; font-weight: normal; font-size: 0.8125rem;">(Optional)</span></label>
+                            <input type="number" step="0.01" id="duQuotationAmountUSD" class="form-input" placeholder="0.00" value="">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Quotation Amount (EUR) <span style="color: #737373; font-weight: normal; font-size: 0.8125rem;">(Optional)</span></label>
+                            <input type="number" step="0.01" id="duQuotationAmountEUR" class="form-input" placeholder="0.00" value="">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Quotation Amount (NGN) <span style="color: #737373; font-weight: normal; font-size: 0.8125rem;">(Optional)</span></label>
+                            <input type="number" step="0.01" id="duQuotationAmountNGN" class="form-input" placeholder="0.00" value="">
+                        </div>
+                    </div>
+                    <small style="color: #737373; font-size: 0.8125rem; display: block; margin-top: -0.5rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                        Fill in quotation amount in any currency (USD, EUR, or NGN). At least one amount is recommended.
+                    </small>
+                    <div class="form-row form-row-2" style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: 600;">Estimated Delivery Date</label>
+                            <input type="date" id="duEstDeliveryDate" class="form-input" value="">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label" style="font-weight: 600;">📎 Upload Quotation Scan (PDF) *</label>
+                        <input type="file" id="duQuotationFile" class="form-input" accept="application/pdf" style="padding: 0.5rem;">
+                        <small style="color: #737373; font-size: 0.8125rem; display: block; margin-top: 0.25rem;">
+                            Upload the scanned quotation PDF received from contractor (Max 5MB)
+                        </small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Quotation Notes (Optional)</label>
+                        <textarea id="duQuotationNotes" class="form-textarea" rows="3" placeholder="Add any notes about this quotation..."></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button onclick="submitDUCommercialDetails()" class="btn" style="background: #00205B; color: white; font-weight: 500; flex: 1; padding: 0.75rem; font-size: 0.875rem;">
+                            Submit for DODM Approval
+                        </button>
+                    </div>
+                    <p style="font-size: 0.8125rem; color: #64748b; margin-top: 0.75rem; line-height: 1.4;">
+                        Commercial details and quotation document will be submitted to the Divisional Operations & Development Manager for review and approval.
+                    </p>
+                </div>
+                
+                <!-- DU Material Delivery Tracking Section -->
+                <div id="duMaterialDeliverySection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f0fdf4; border-radius: 0.5rem; border: 1px solid #10b981;">
+                    <h4 style="color: #065f46; margin-bottom: 1rem; font-size: 1rem; border-bottom: 1px solid #10b981; padding-bottom: 0.75rem; font-weight: 600;">📦 Material Delivery Tracking</h4>
+                    
+                    <!-- Step 1: Material Delivered by Contractor -->
+                    <div id="materialDeliveredByContractorSection" style="margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 0.375rem; border: 1px solid #cbd5e1;">
+                        <h5 style="color: #065f46; margin-bottom: 0.75rem; font-size: 0.9375rem; font-weight: 600;">Step 1: Material Delivered by Contractor</h5>
+                        <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">Confirm when materials have been delivered to your unit by the contractor.</p>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="checkbox" id="materialDeliveredByContractorCheckbox" onchange="markMaterialDeliveredByContractor()" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #065f46; margin-bottom: 0.25rem; font-size: 0.9375rem;">✓ Material Delivered by Contractor</div>
+                                <div style="font-size: 0.8125rem; color: #64748b;">Confirm receipt of materials from contractor</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Step 2: Material Sent to Requestor -->
+                    <div id="materialSentToRequestorSection" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 0.375rem; border: 1px solid #cbd5e1;">
+                        <h5 style="color: #065f46; margin-bottom: 0.75rem; font-size: 0.9375rem; font-weight: 600;">Step 2: Material Sent to Requestor</h5>
+                        <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">Confirm when materials have been forwarded to the requestor.</p>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #cbd5e1; cursor: pointer;">
+                            <input type="checkbox" id="materialSentToRequestorCheckbox" onchange="markMaterialSentToRequestor()" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #065f46; margin-bottom: 0.25rem; font-size: 0.9375rem;">✓ Material Sent to Requestor</div>
+                                <div style="font-size: 0.8125rem; color: #64748b;">Confirm materials have been forwarded to requestor</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Requestor Material Receipt Section - Simplified -->
+                <div id="requestorMaterialReceiptSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #f0fdf4; border-radius: 0.5rem; border: 2px solid #10b981;">
+                    <h4 style="color: #065f46; margin-bottom: 1rem; font-size: 1rem; font-weight: 600;">📦 Confirm Material Receipt</h4>
+                    <p style="color: #365314; font-size: 0.875rem; margin-bottom: 1.5rem;">Please confirm the quantities you received for each item.</p>
+                    
+                    <!-- Line Items with Received Quantities -->
+                    <div id="materialReceiptLineItems" style="margin-bottom: 1.5rem;">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    
+                    <!-- Simple Action Buttons -->
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button onclick="acknowledgeMaterialReceipt(true)" class="btn" style="background: #10b981; color: white; font-weight: 600; flex: 1; padding: 0.875rem; border-radius: 0.5rem; font-size: 0.9375rem;">
+                            ✅ All Materials Received
+                        </button>
+                        <button onclick="showComplaintForm()" class="btn" style="background: #f59e0b; color: white; font-weight: 600; flex: 1; padding: 0.875rem; border-radius: 0.5rem; font-size: 0.9375rem;">
+                            ⚠️ Report Issue
+                        </button>
+                    </div>
+                    
+                    <!-- Complaint Form (Hidden by default) -->
+                    <div id="complaintFormSection" style="display: none; margin-top: 1.5rem; padding: 1rem; background: #fee2e2; border-radius: 0.5rem; border: 1px solid #ef4444;">
+                        <h5 style="color: #991b1b; margin-bottom: 0.75rem; font-size: 0.9375rem; font-weight: 600;">Report Delivery Issue</h5>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-weight: 600; color: #991b1b;">Issue Description *</label>
+                            <textarea id="deliveryComplaintDetails" class="form-textarea" rows="3" placeholder="Describe the issue (e.g., missing items, wrong quantities, damaged materials)..." required></textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-weight: 600;">Additional Comments</label>
+                            <textarea id="materialReceiptComments" class="form-textarea" rows="2" placeholder="Any additional comments..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button onclick="acknowledgeMaterialReceipt(false)" class="btn" style="background: #ef4444; color: white; font-weight: 600; flex: 1; padding: 0.75rem; border-radius: 0.5rem;">
+                                ❌ Submit Complaint
+                            </button>
+                            <button onclick="hideComplaintForm()" class="btn" style="background: #6b7280; color: white; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 0.5rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DU Commercial Workflow Section -->
+                <div id="duCommercialWorkflowSection" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; background: #dbeafe; border-radius: 0.5rem; border: 2px solid #3b82f6;">
+                    <h4 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.125rem; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem;">📋 Commercial Workflow Actions</h4>
+                    
+                    <!-- Mark MRF Sent to Contractor -->
+                    <div id="markSentToContractorSection" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 0.375rem; border: 1px solid #e5e5e5;">
+                        <h5 style="color: #1e40af; margin-bottom: 0.75rem; font-size: 0.9375rem; font-weight: 600;">1️⃣ Mark MRF Sent to Contractor</h5>
+                        <div class="form-row form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Contractor Name</label>
+                                <input type="text" id="contractorName" class="form-input" placeholder="Enter contractor name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quotation Date</label>
+                                <input type="date" id="contractorQuotationDate" class="form-input">
+                            </div>
+                        </div>
+                        <button onclick="markMRFSentToContractor()" class="btn" style="background: #3b82f6; color: white; margin-top: 0.5rem;">
+                            ✅ Mark as Sent to Contractor
+                        </button>
+                    </div>
+                    
+                    <!-- OLD Submit Contractor Quotation Section - HIDDEN (replaced by duCommercialDetailsSection) -->
+                    <div id="submitContractorQuotationSection" style="display: none !important;">
+                        <!-- This section is hidden - use duCommercialDetailsSection instead -->
+                    </div>
+                    
+                    <!-- Mark Material Delivered -->
+                    <div id="markMaterialDeliveredSection" style="display: none; padding: 1rem; background: white; border-radius: 0.375rem; border: 1px solid #e5e5e5;">
+                        <h5 style="color: #1e40af; margin-bottom: 0.75rem; font-size: 0.9375rem; font-weight: 600;">3️⃣ Mark Material Delivered</h5>
+                        <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem;">Mark when materials have been delivered to the Discipline Unit.</p>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem; border: 1px solid #e5e5e5;">
+                            <input type="checkbox" id="markDeliveryCheckbox" onchange="markMaterialDeliveredByContractor()" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                            <span style="font-weight: 500; color: #00205B;">📦 Material Delivered to DU</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- MRF Download (for completed requests) -->
+                <div id="mrfDownloadSection" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f0fdf4; border-radius: 0.5rem; border: 2px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: #10b981; margin: 0 0 0.25rem 0; font-size: 1rem;">✅ Request Completed</h4>
+                            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">MRF PDF is now available for download</p>
+                        </div>
+                        <button onclick="downloadMRFFromModal()" class="btn" style="background: #10b981; color: white; font-weight: 600;">
+                            📄 Download MRF
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Submit -->
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button onclick="closeApprovalModal()" class="btn btn-outline">Cancel</button>
+                    <button id="submitApprovalBtn" onclick="submitApproval()" class="btn btn-primary">Submit Decision</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/approval-dashboard.js"></script>
+</body>
+</html>

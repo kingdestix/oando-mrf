@@ -1,0 +1,195 @@
+<!-- frontend/users.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="assets/images/oando-logo.png" alt="Oando Energy" class="logo">
+            </a>
+            <div class="navbar-menu" id="sidebarMenu"></div>
+            <div class="navbar-user"></div>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>User Management</h1>
+            <div class="page-header-actions">
+                <button onclick="showAddUserModal()" class="btn btn-primary">+ Add User</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Role Filter</label>
+                        <select id="roleFilter" class="form-select" onchange="loadUsers()">
+                            <option value="">All Roles</option>
+                            <option value="worker">Worker (Requestor)</option>
+                            <option value="technical_coordinator">Technical Coordinator</option>
+                            <option value="assistant_manager">Assistant Manager</option>
+                            <option value="area_manager_land">Area Manager - Land</option>
+                            <option value="area_manager_swamp">Area Manager - Swamp</option>
+                            <option value="area_manager_phc">Area Manager - PHC</option>
+                            <option value="pod_planner">POD Planner</option>
+                            <option value="discipline_unit">Discipline Unit</option>
+                            <option value="discipline_manager">Discipline Manager</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status Filter</label>
+                        <select id="statusFilter" class="form-select" onchange="loadUsers()">
+                            <option value="">All</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Search</label>
+                        <input type="text" id="searchInput" class="form-input" placeholder="Name, email, user ID..." onkeyup="searchUsers()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add User</h3>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">User ID</label>
+                            <input type="text" id="user_id" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">First Name</label>
+                            <input type="text" id="first_name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Last Name</label>
+                            <input type="text" id="last_name" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Role</label>
+                            <select id="role" class="form-select" required onchange="updateRoleFields()">
+                                <option value="">-- Select Role --</option>
+                                <option value="worker">Worker (Requestor)</option>
+                                <option value="technical_coordinator">Technical Coordinator</option>
+                                <option value="assistant_manager">Assistant Manager</option>
+                                <option value="area_manager_land">Area Manager - Land (LAR)</option>
+                                <option value="area_manager_swamp">Area Manager - Swamp (SAR)</option>
+                                <option value="area_manager_phc">Area Manager - PHC POD</option>
+                                <option value="pod_planner">POD Planner</option>
+                                <option value="discipline_unit">Discipline Unit</option>
+                                <option value="discipline_manager">Discipline Manager</option>
+                                <option value="dodm">DODM (Divisional Operations & Development Manager)</option>
+                                <option value="maintenance_manager">Maintenance Manager</option>
+                                <option value="assistant_discipline_manager">Assistant Discipline Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Designation</label>
+                            <input type="text" id="designation" class="form-input" placeholder="e.g., PROD. PROJ.COORD">
+                        </div>
+                    </div>
+                    <div class="form-row" id="disciplineAssignmentRow" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label required">Discipline Assignment</label>
+                            <select id="discipline_assignment" class="form-select">
+                                <option value="">-- Select Discipline --</option>
+                                <option value="ROTATING EQUIPMENT">ROTATING EQUIPMENT</option>
+                                <option value="POWER GENERATION">POWER GENERATION</option>
+                                <option value="METERING AND AUTOMATION">METERING AND AUTOMATION</option>
+                                <option value="ASSET INTEGRITY">ASSET INTEGRITY</option>
+                                <option value="ESP">ESP</option>
+                                <option value="PRODUCTION">PRODUCTION</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="areaAssignmentRow" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">Area Assignment</label>
+                            <select id="area_assignment" class="form-select">
+                                <option value="">-- Select Area --</option>
+                                <option value="Land Area">Land Area (LAR)</option>
+                                <option value="Swamp Area">Swamp Area (SAR)</option>
+                                <option value="PHC POD">PHC POD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <input type="text" id="department" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" id="location" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label class="form-label required">Password</label>
+                        <input type="password" id="password" class="form-input" minlength="6">
+                        <p class="form-help">Minimum 6 characters</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeUserModal()" class="btn btn-outline">Cancel</button>
+                <button onclick="saveUser()" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/users.js"></script>
+</body>
+</html>

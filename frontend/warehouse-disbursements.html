@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Disbursements - Oando MRF</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .line-item-row {
+            display: grid;
+            grid-template-columns: 50px 2fr 1.5fr 1.5fr 1fr 1fr 80px;
+            gap: 0.75rem;
+            align-items: end;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--grey-50);
+            border-radius: 0.375rem;
+        }
+        @media (max-width: 768px) {
+            .line-item-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .remove-line-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .disbursements-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            font-size: 0.8125rem;
+        }
+        .disbursements-table thead th {
+            background-color: #00205B;
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 0.625rem;
+            text-align: left;
+            white-space: nowrap;
+            border-bottom: 2px solid #F58220;
+        }
+        .disbursements-table tbody td {
+            padding: 0.75rem 0.625rem;
+            border-bottom: 1px solid #e5e5e5;
+            vertical-align: middle;
+        }
+        .disbursements-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .stock-check {
+            font-size: 0.75rem;
+            color: #737373;
+            margin-top: 0.25rem;
+        }
+        .stock-check.available {
+            color: #10b981;
+        }
+        .stock-check.low {
+            color: #f59e0b;
+        }
+        .stock-check.unavailable {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/admin-dashboard.html" class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg width='180' height='80' viewBox='0 0 180 80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='40' r='25' fill='%23FDDB6F'/%3E%3Ccircle cx='30' cy='40' r='20' fill='%23FCA94B'/%3E%3Ccircle cx='30' cy='40' r='15' fill='%23F58220'/%3E%3Ccircle cx='30' cy='40' r='10' fill='%23EA532F'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300205B'/%3E%3Ctext x='68' y='52' font-family='Arial, sans-serif' font-size='32' font-weight='bold' fill='%2300205B'%3EOando%3C/text%3E%3C/svg%3E" alt="Oando" class="logo">
+            </a>
+            <div class="navbar-menu"></div>
+            <div class="navbar-user"></div>
+            <button class="menu-toggle">☰</button>
+        </div>
+    </nav>
+
+    <main class="page-content container">
+        <div class="page-header">
+            <h1>📤 Warehouse Disbursements</h1>
+            <button onclick="showNewDisbursementForm()" class="btn btn-primary">+ New Disbursement</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <!-- New Disbursement Form -->
+        <div id="newDisbursementForm" class="card mb-3" style="display: none;">
+            <div class="card-header">
+                <h3>Create Warehouse Disbursement</h3>
+            </div>
+            <div class="card-body">
+                <form id="disbursementForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Warehouse</label>
+                            <select id="warehouse_id" class="form-select" required onchange="checkStockAvailability()">
+                                <option value="">Select Warehouse</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Request ID (Optional)</label>
+                            <input type="number" id="request_id" class="form-input" placeholder="MRF Request ID">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Disbursed Date</label>
+                            <input type="date" id="disbursed_date" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Disbursed By</label>
+                            <input type="text" id="disbursed_by" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Received By</label>
+                            <input type="text" id="received_by" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <input type="text" id="department" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Work Order No</label>
+                            <input type="text" id="work_order_no" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Purpose</label>
+                            <input type="text" id="purpose" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Remarks</label>
+                        <textarea id="remarks" class="form-textarea" rows="2"></textarea>
+                    </div>
+
+                    <div class="card mb-3" style="background: var(--grey-50);">
+                        <div class="card-header">
+                            <h4>Material Items</h4>
+                            <button type="button" onclick="addDisbursementLineItem()" class="btn btn-secondary btn-sm">+ Add Item</button>
+                        </div>
+                        <div class="card-body" id="disbursementItemsContainer">
+                            <!-- Line items will be added here -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Disbursement</button>
+                        <button type="button" onclick="cancelDisbursementForm()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label class="form-label">Warehouse</label>
+                        <select id="filterWarehouse" class="form-select">
+                            <option value="">All Warehouses</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">From Date</label>
+                        <input type="date" id="filterFromDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Date</label>
+                        <input type="date" id="filterToDate" class="form-input">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button onclick="loadDisbursements()" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disbursements List -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Disbursements History</h3>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x: auto;">
+                    <table class="disbursements-table">
+                        <thead>
+                            <tr>
+                                <th>Disbursement #</th>
+                                <th>Date</th>
+                                <th>Warehouse</th>
+                                <th>Disbursed By</th>
+                                <th>Received By</th>
+                                <th>Items</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disbursementsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="disbursementsPagination" class="pagination"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/warehouse-disbursements.js"></script>
+</body>
+</html>
+
